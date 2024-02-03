@@ -59,6 +59,7 @@ class CiscoXrBase(CiscoBaseConnection):
         comment: str = "",
         label: str = "",
         read_timeout: float = 120.0,
+        replace: bool = False,
         delay_factor: Optional[float] = None,
     ) -> str:
         """
@@ -123,6 +124,8 @@ class CiscoXrBase(CiscoBaseConnection):
             command_string = f"commit confirmed {str(confirm_delay)}"
         elif comment:
             command_string = f"commit comment {comment}"
+        elif replace:
+            command_string = "commit replace"
         else:
             command_string = "commit"
 
@@ -133,12 +136,12 @@ class CiscoXrBase(CiscoBaseConnection):
         # This could be a few minutes if your config is large. Confirm? [y/n][confirm]
         new_data = self._send_command_str(
             command_string,
-            expect_string=r"(#|onfirm)",
+            expect_string=r"(#|onfirm|Do you wish to proceed)",
             strip_prompt=False,
             strip_command=False,
             read_timeout=read_timeout,
         )
-        if "onfirm" in new_data:
+        if "onfirm" in new_data or "Do you wish to proceed" in new_data:
             output += new_data
             new_data = self._send_command_str(
                 "y",
